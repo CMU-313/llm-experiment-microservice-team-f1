@@ -3,12 +3,9 @@ services:
     build:
       context: .
     container_name: translator-service
-    ports:
-      - "5000:5000"
+    network_mode: host
     environment:
       HOST: "0.0.0.0"
       PORT: "5000"
-      OLLAMA_HOST: "${OLLAMA_HOST:-http://host.docker.internal:11434}"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      OLLAMA_HOST: "${OLLAMA_HOST:-http://127.0.0.1:11434}"
     restart: unless-stopped
