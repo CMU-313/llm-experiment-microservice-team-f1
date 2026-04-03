@@ -37,6 +37,14 @@ def _get_client() -> Any:
     return _client
 
 
+class _ClientProxy:
+    def chat(self, *args: Any, **kwargs: Any) -> Any:
+        return _get_client().chat(*args, **kwargs)
+
+
+client = _ClientProxy()
+
+
 def _fallback_translate(content: str) -> tuple[bool, str]:
     stripped_content = content.strip()
 
@@ -54,8 +62,6 @@ def _fallback_translate(content: str) -> tuple[bool, str]:
 
 def translate_content(content: str) -> tuple[bool, str]:
     try:
-        client = _get_client()
-
         # Detect language before deciding whether translation is needed.
         lang_response = client.chat(model=MODEL, messages=[
             {"role": "system", "content": CLASSIFICATION_CONTEXT},
