@@ -47,6 +47,57 @@ Navigate to [http://127.0.0.1:5000/?content=Dies ist eine Nachricht auf Deutsch]
 
 See the code in `src/translator.py` for the full list of hard-coded dummy translations.
 
+## Deploy on a Linux VM with Docker Compose
+
+This service can be deployed as a single Docker container that listens on `0.0.0.0:5000`, which allows a NodeBB container on the same VM to reach it over HTTP via the VM's IP address on port `5000`.
+
+### Files used for deployment
+
+- `Dockerfile`: builds the image and starts the app with `python app.py`
+- `docker-compose.yml`: publishes `5000:5000`, sets restart policy, and maps `host.docker.internal` to the VM host gateway
+
+### Start it on the VM
+
+```bash
+cd /path/to/llm-experiment-microservice-team-f1
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo docker compose up -d --build
+```
+
+If Ollama is running somewhere other than the VM host, override `OLLAMA_HOST` before starting:
+
+```bash
+export OLLAMA_HOST=http://YOUR_OLLAMA_HOST:11434
+sudo -E docker compose up -d --build
+```
+
+### Verify it
+
+```bash
+curl "http://localhost:5000/?content=Hola%20mundo"
+sudo docker compose ps
+sudo docker compose logs --tail=100 translator
+```
+
+### Keep it running after reboot
+
+The Compose service uses `restart: unless-stopped`, so once Docker is enabled on boot, the translator container will come back automatically after a VM reboot.
+
+### How NodeBB can reach it
+
+From the VM host, use:
+
+```bash
+http://localhost:5000
+```
+
+From NodeBB running in Docker on the same VM, use the VM's IP address on port `5000`, for example:
+
+```bash
+http://YOUR_VM_IP:5000
+```
+
 # Integrating the translator service with NodeBB
 
 Now that you have a dummy translator service deployed, you can integrate it into NodeBB by allowing new posts to be translated at creation time and to display a "Translate" button for such posts. To save you the trouble, we are providing the code changes required for this UI. 
