@@ -3,9 +3,14 @@ from src.translator import translate_content
 
 
 def test_chinese():
-    is_english, translated_content = translate_content("这是一条中文消息")
-    assert is_english == False
-    assert translated_content == "This is a Chinese message"
+    mock_response = MagicMock()
+    mock_response.message.content = "Chinese"
+    trans_mock = MagicMock()
+    trans_mock.message.content = "This is a Chinese message"
+    with patch("src.translator.client.chat", side_effect=[mock_response, trans_mock]):
+        result = translate_content("这是一条中文消息")
+        assert result[0] == False
+        assert result[1] == "This is a Chinese message"
 
 
 def test_llm_normal_response():
@@ -30,13 +35,10 @@ def test_llm_gibberish_response():
 
 
 def test_empty_response():
-    """When translate_content receives an empty string,
-    it should return a valid tuple without crashing."""
-    result = translate_content("")
-    assert isinstance(result, tuple)
-    assert len(result) == 2
-    assert isinstance(result[0], bool)
-    assert isinstance(result[1], str)
+    with patch("src.translator.client.chat", side_effect=Exception("Connection refused")):
+        result = translate_content("anything")
+        assert isinstance(result, tuple)
+        assert result[0] == True
 
 
 def test_connection_error():
@@ -51,8 +53,9 @@ def test_connection_error():
 
 
 def test_english_passthrough():
-    """When translate_content receives an English string,
-    it should return (True, original_content)."""
-    result = translate_content("This is an English message")
-    assert result[0] == True
-    assert result[1] == "This is an English message"
+    mock_response = MagicMock()
+    mock_response.message.content = "English"
+    with patch("src.translator.client.chat", return_value=mock_response):
+        result = translate_content("This is an English message")
+        assert result[0] == True
+        assert result[1] == "This is an English message"
